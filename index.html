@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Recorder</title>
+    <title>Screen and Audio Recorder</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -25,7 +25,7 @@
     </style>
 </head>
 <body>
-    <h1>Screen Recorder</h1>
+    <h1>Screen and Audio Recorder</h1>
     <button id="start">Start Recording</button>
     <button id="stop" disabled>Stop Recording</button>
     <a id="download" style="display:none;">Download Video</a>
@@ -42,16 +42,26 @@
 
         startButton.addEventListener('click', async () => {
             try {
-                // Capture screen
-                const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { frameRate: 60, width: 1920, height: 1080 }
+                // Request screen capture with audio
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { frameRate: 60, width: 1920, height: 1080 },
+                    audio: true // Capture system audio
                 });
 
+                // Request microphone audio (optional)
+                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                // Combine screen and microphone audio streams
+                const combinedStream = new MediaStream([
+                    ...screenStream.getTracks(),
+                    ...audioStream.getAudioTracks()
+                ]);
+
                 // Show preview
-                preview.srcObject = stream;
+                preview.srcObject = combinedStream;
 
                 // Set up MediaRecorder
-                mediaRecorder = new MediaRecorder(stream, {
+                mediaRecorder = new MediaRecorder(combinedStream, {
                     mimeType: 'video/webm; codecs=vp9'
                 });
 
@@ -68,7 +78,7 @@
                     const url = URL.createObjectURL(blob);
 
                     downloadLink.href = url;
-                    downloadLink.download = 'screen-recording.webm';
+                    downloadLink.download = 'screen-recording-with-audio.webm';
                     downloadLink.style.display = 'inline';
                     downloadLink.textContent = 'Download Video';
 
